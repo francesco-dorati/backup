@@ -3,7 +3,7 @@
 import subprocess
 import time
 
-
+from data import HOSTNAME, MAC_ADDRESS, SOURCE, DESTINATION
 
 def main():
   if not ping(HOSTNAME):
