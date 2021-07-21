@@ -3,19 +3,32 @@
 import subprocess
 import time
 
-from data import HOSTNAME, MAC_ADDRESS, SOURCE, DESTINATION
+try:
+    from data import IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION
+except ImportError:
+    print("Create data.py file with \nIP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION string variables.")
+    exit(1)
+
+if not IP_ADDRESS or not MAC_ADDRESS or not SOURCE or not DESTINATION:
+    print("Missing data in data.py file.")
+    exit(1)
 
 def main():
-  if not ping(HOSTNAME):
-    print("Host is down.")
-    wake_on_lan(MAC_ADDRESS)
-    while not ping(HOSTNAME):
-      time.sleep(1)
+    if not ping(IP_ADDRESS):
+        print("Host is down.")
+        wake_on_lan(MAC_ADDRESS)
+        while not ping(IP_ADDRESS):
+            time.sleep(.5)
+    print("Host is up.\n")
 
-  print("Host is up.")
-  backup(HOSTNAME, SOURCE, DESTINATION)
-  # copy files
-  shutdown(HOSTNAME)
+    backup(IP_ADDRESS, SOURCE, DESTINATION)
+    # copy files
+
+    shutdown(IP_ADDRESS)
+    while ping(IP_ADDRESS):
+        time.sleep(.5)
+    print("Host is down.\n")
+    print("Backup successful.")
 
 
 def ping(host):
@@ -38,11 +51,16 @@ def wake_on_lan(mac):
 
 def backup(host, source, destination):
     print(f"Backing up {source}...")
-    subprocess.call(f'rsync -azP {source} root@{host}:{destination}',
+    out = subprocess.call(f'rsync -azP {source} root@{host}:{destination}',
         shell=True,
         stdout=open('/dev/null', 'w'),
         stderr=subprocess.PIPE
     )
+
+    if out != 0:
+        print("A backup error has occurred.")
+        exit(2)
+
     print(f"{source} backed up.")
 
 
@@ -53,7 +71,6 @@ def shutdown(host):
         stdout=open('/dev/null', 'w'),
         stderr=subprocess.PIPE
     )
-    print(f"{host} is down.")
 
 
 if __name__ == '__main__':
