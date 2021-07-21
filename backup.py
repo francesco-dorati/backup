@@ -4,7 +4,7 @@ import subprocess
 import time
 
 try:
-    from data import IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION
+    from data import IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION, INTERNAL_SOURCE, INTERNAL_DESTINATION
 except ImportError:
     print("Create data.py file with \nIP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION string variables.")
     exit(1)
@@ -15,18 +15,18 @@ if not IP_ADDRESS or not MAC_ADDRESS or not SOURCE or not DESTINATION:
 
 def main():
     if not ping(IP_ADDRESS):
-        print("Host is down.")
+        print(f"{IP_ADDRESS} is down.")
         wake_on_lan(MAC_ADDRESS)
         while not ping(IP_ADDRESS):
-            time.sleep(.5)
-    print("Host is up.\n")
+            pass
+    print(f"{IP_ADDRESS} is up.\n")
 
     backup(IP_ADDRESS, SOURCE, DESTINATION)
-    # copy files
+    internal_backup(IP_ADDRESS, INTERNAL_SOURCE, INTERNAL_DESTINATION)
 
     shutdown(IP_ADDRESS)
     while ping(IP_ADDRESS):
-        time.sleep(.5)
+        pass
     print("Host is down.\n")
     print("Backup successful.")
 
@@ -51,18 +51,29 @@ def wake_on_lan(mac):
 
 def backup(host, source, destination):
     print(f"Backing up {source}...")
-    out = subprocess.call(f'rsync -azP {source} root@{host}:{destination}',
+    out = subprocess.call(f'rsync -azv --delete {source} root@{host}:{destination}',
         shell=True,
-        stdout=open('/dev/null', 'w'),
+        # stdout=open('/dev/null', 'w'),
         stderr=subprocess.PIPE
     )
 
     if out != 0:
         print("A backup error has occurred.")
-        exit(2)
 
-    print(f"{source} backed up.")
+    print(f"{source} backed up.\n")
 
+def internal_backup(host, source, destination):
+    print(f"Backing up {source}...")
+    out = subprocess.call(f'ssh root@{host} "rsync -azv {source} {destination}"',
+        shell=True,
+        # stdout=open('/dev/null', 'w'),
+        stderr=subprocess.PIPE
+    )
+
+    if out != 0:
+        print("A backup error has occurred.")
+
+    print(f"{source} backed up.\n")
 
 def shutdown(host):
     print(f"Shutting down {host}...")
