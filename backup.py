@@ -10,7 +10,7 @@ except ImportError:
     print("Create data.py file with \nIP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION string variables.")
     exit(1)
 
-if not all(IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION):
+if not all([IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION]):
     print("Missing data in data.py file.")
     exit(1)
 
