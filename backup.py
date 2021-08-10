@@ -2,6 +2,7 @@
 
 import subprocess
 import time
+import os
 
 try:
     from data import IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION, INTERNAL_SOURCE, INTERNAL_DESTINATION
@@ -9,11 +10,17 @@ except ImportError:
     print("Create data.py file with \nIP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION string variables.")
     exit(1)
 
-if not IP_ADDRESS or not MAC_ADDRESS or not SOURCE or not DESTINATION:
+if not all(IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION):
     print("Missing data in data.py file.")
     exit(1)
 
 def main():
+    # check root access
+    if not os.access('/root', os.R_OK):
+        print("Missing root privileges.")
+        exit(1)
+    
+    # switch up
     if not ping(IP_ADDRESS):
         print(f"{IP_ADDRESS} is down.")
         wake_on_lan(MAC_ADDRESS)
