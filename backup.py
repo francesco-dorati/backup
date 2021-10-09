@@ -4,15 +4,8 @@ import subprocess
 import time
 import os
 
-
-# if not all([IP_ADDRESS, MAC_ADDRESS, SOURCE, MAIN_DESTINATION]):
-#     print("Missing data in data.py file.")
-#     exit(1)
-
 class Backup:
     def __init__(self, ip, mac, source, destination, backup_destination):
-        # TODO 
-        # try to get ip address form mac
         self.ip_address = ip
         self.mac_address = mac
         self.source = source
@@ -22,7 +15,7 @@ class Backup:
         # check if all
         if not all([ip, mac, source, destination, backup_destination]):
             raise Exception('Missing arguments.')
-    
+
     def start(self):
         # check root access
         if not os.access('/root', os.R_OK):
@@ -65,8 +58,6 @@ class Backup:
             pass
         print("Host is down.\n")
         print("Backup successful.")
-
-        
 
         
     def __is_up(self, ip_address):
@@ -120,9 +111,8 @@ def main():
     except ImportError:
         print("Create data.py file with \nIP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION string variables.")
         exit(1)
-
     backup = Backup(IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION, BACKUP_DESTINATION)
     backup.start()
 
 if __name__ == '__main__':
-  main()
+    main()
