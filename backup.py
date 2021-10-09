@@ -2,12 +2,13 @@
 
 import subprocess
 import logging
+import time
 import os
 
 logging.basicConfig(
     filename='process.log', 
     level=10, 
-    format='%(asctime)s:%(levelname)s:%(funcName)s:%(message)s')
+    format='%(asctime)s:%(levelname)s:%(funcName)s:%(lineno)d\t%(message)s')
 
 class Backup:
     def __init__(self, ip, mac, source, destination, backup_destination):
@@ -30,7 +31,7 @@ class Backup:
 
         # check root access
         if not os.access('/root', os.R_OK):
-            logging.critical('Missing root privileges.')
+            logging.critical('Missing root privileges.\n')
             raise Exception("Missing root privileges.")
 
         # switch on
@@ -42,6 +43,7 @@ class Backup:
             count = 0
             while not self.__is_up(self.ip_address):
                 if count == 10:
+                    logging.critical('Host took too mutch to switch on.\n')
                     print(f'Host took too mutch to switch on.\nExiting...')
                     exit(1)
                 count += 1
@@ -67,7 +69,7 @@ class Backup:
         # shutdown
         self.__shutdown(self.ip_address)
         while self.__is_up(self.ip_address):
-            pass
+            time.sleep(5)
         print("Host is down.\n")
 
         logging.info('Backup Successful\n')
@@ -101,7 +103,7 @@ class Backup:
         )
 
         if out != 0:
-            logging.error(f'Backup Error - code: {out}')
+            logging.error(f'Backup Error - code: {out}\n')
             print("A backup error has occurred.")
             exit(1)
         
@@ -114,7 +116,7 @@ class Backup:
         )
 
         if out != 0:
-            logging.error(f'Backup Error - code: {out}')
+            logging.error(f'Backup Error - code: {out}\n')
             print("A backup error has occurred.")
             exit(1)
 
