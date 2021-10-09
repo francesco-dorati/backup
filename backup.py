@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 
 import subprocess
-import time
+import logging
 import os
+
+logging.basicConfig(
+    filename='process.log', 
+    level=10, 
+    format='%(asctime)s:%(levelname)s:%(funcName)s:%(message)s')
 
 class Backup:
     def __init__(self, ip, mac, source, destination, backup_destination):
@@ -15,10 +20,17 @@ class Backup:
         # check if all
         if not all([ip, mac, source, destination, backup_destination]):
             raise Exception('Missing arguments.')
+        
+        
+        logging.info(f'Process Created')
+        logging.info(f'{ip=}, {mac=}, {source=}, {destination=}, {backup_destination=}')
 
     def start(self):
+        logging.info(f'Process Started')
+
         # check root access
         if not os.access('/root', os.R_OK):
+            logging.critical('Missing root privileges.')
             raise Exception("Missing root privileges.")
 
         # switch on
@@ -57,6 +69,8 @@ class Backup:
         while self.__is_up(self.ip_address):
             pass
         print("Host is down.\n")
+
+        logging.info('Backup Successful\n')
         print("Backup successful.")
 
         
@@ -67,9 +81,11 @@ class Backup:
             stderr=subprocess.PIPE
         )
 
+        logging.info(f'Ping {ip_address}: {"True" if out == 0 else "False"}')
         return True if out == 0 else False
 
     def __switch_on(self, mac_address: str):
+        logging.info(f'WakeOnLan {mac_address}')
         subprocess.call(f'wakeonlan {mac_address}',
             shell=True,
             stdout=open('/dev/null', 'w'),
@@ -77,6 +93,7 @@ class Backup:
         )
 
     def __backup(self, source, destination):
+        logging.info(f'Remote Backup {source} to {destination}')
         out = subprocess.call(f'rsync -azv --delete {source} {destination}',
             shell=True,
             # stdout=open('/dev/null', 'w'),
@@ -84,9 +101,12 @@ class Backup:
         )
 
         if out != 0:
+            logging.error(f'Backup Error - code: {out}')
             print("A backup error has occurred.")
+            exit(1)
         
     def __internal_backup(self, ip_address, source, destination):
+        logging.info(f'Internal Backup {ip_address}:{source} to {ip_address}:{destination}')
         out = subprocess.call(f'ssh root@{ip_address} "rsync -azv {source}/ {destination}"',
             shell=True,
             # stdout=open('/dev/null', 'w'),
@@ -94,10 +114,13 @@ class Backup:
         )
 
         if out != 0:
+            logging.error(f'Backup Error - code: {out}')
             print("A backup error has occurred.")
-        pass
+            exit(1)
+
 
     def __shutdown(self, ip_address):
+        logging.info(f'Sending shutdown request {ip_address}')
         print(f"Shutting down {ip_address}...")
         subprocess.call(f'ssh root@{ip_address} "shutdown now"',
             shell=True,
