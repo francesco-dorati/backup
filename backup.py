@@ -134,7 +134,7 @@ def main():
     try:
         from data import IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION, BACKUP_DESTINATION
     except ImportError:
-        print("Create data.py file with \nIP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION string variables.")
+        print("Create data.py file with \nIP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION, BACKUP_DESTINATION string variables.")
         exit(1)
     backup = Backup(IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION, BACKUP_DESTINATION)
     backup.start()
