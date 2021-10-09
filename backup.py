@@ -4,13 +4,17 @@ import subprocess
 import time
 import os
 
+def log(s: str): 
+    with open('log.txt', 'a') as file:
+        file.write(f'{s} at {time.strftime("%H:%M:%S %d %B %y")}') 
+
 try:
     from data import IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION, INTERNAL_SOURCE, INTERNAL_DESTINATION
 except ImportError:
     print("Create data.py file with \nIP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION string variables.")
     exit(1)
 
-if not all([IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION]):
+if not all([IP_ADDRESS, MAC_ADDRESS, SOURCE, DESTINATION, INTERNAL_SOURCE, INTERNAL_DESTINATION]):
     print("Missing data in data.py file.")
     exit(1)
 
@@ -39,30 +43,36 @@ def main():
 
 
 def ping(host):
-    out = subprocess.call(f'ping -c 1 -t 1 {host}',
+    cmd = f'ping -c 1 -t 1 {host}'
+    out = subprocess.call(cmd,
         shell=True,
         stdout=open('/dev/null', 'w'),
         stderr=subprocess.PIPE
     )
+    log(cmd)
 
     return True if out == 0 else False
 
 
 def wake_on_lan(mac):
     print("Switching it up...")
-    subprocess.call(f'wakeonlan {mac}',
+    cmd = f'wakeonlan {mac}'
+    subprocess.call(cmd,
         shell=True,
         stdout=open('/dev/null', 'w'),
         stderr=subprocess.PIPE
     )
+    log(cmd)
 
 def backup(host, source, destination):
     print(f"Backing up {source}...")
-    out = subprocess.call(f'rsync -azv --delete {source} root@{host}:{destination}',
+    cmd = f'rsync -azv --delete {source} root@{host}:{destination}'
+    out = subprocess.call(cmd,
         shell=True,
         # stdout=open('/dev/null', 'w'),
         stderr=subprocess.PIPE
     )
+    log(cmd)
 
     if out != 0:
         print("A backup error has occurred.")
@@ -71,11 +81,13 @@ def backup(host, source, destination):
 
 def internal_backup(host, source, destination):
     print(f"Backing up {source}...")
-    out = subprocess.call(f'ssh root@{host} "rsync -azv {source} {destination}"',
+    cmd = f'ssh root@{host} "rsync -azv {source} {destination}"' 
+    out = subprocess.call(cmd,
         shell=True,
         # stdout=open('/dev/null', 'w'),
         stderr=subprocess.PIPE
     )
+    log(cmd)
 
     if out != 0:
         print("A backup error has occurred.")
@@ -84,12 +96,16 @@ def internal_backup(host, source, destination):
 
 def shutdown(host):
     print(f"Shutting down {host}...")
-    subprocess.call(f'ssh root@{host} "shutdown now"',
+    cmd = f'ssh root@{host} "shutdown now"'
+    subprocess.call(cmd,
         shell=True,
         stdout=open('/dev/null', 'w'),
         stderr=subprocess.PIPE
     )
+    log(cmd)
 
 
 if __name__ == '__main__':
-  main()
+    log('Starting process')
+    main()
+    log('Ending process')
