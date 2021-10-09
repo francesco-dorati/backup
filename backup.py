@@ -5,8 +5,9 @@ import logging
 import time
 import os
 
+
 logging.basicConfig(
-    filename='process.log', 
+    filename=f'{"/".join(os.path.realpath(__file__).split("/")[:-1])}/process.log', 
     level=10, 
     format='%(asctime)s:%(levelname)s:%(funcName)s:%(lineno)d\t%(message)s')
 
