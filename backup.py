@@ -3,13 +3,19 @@
 import subprocess
 import logging
 import time
+import sys
 import os
 
 
 logging.basicConfig(
-    filename=f'{"/".join(os.path.realpath(__file__).split("/")[:-1])}/process.log', 
     level=10, 
-    format='%(asctime)s:%(levelname)s:%(funcName)s:%(lineno)d\t%(message)s')
+    format='%(asctime)s:%(levelname)s:%(lineno)d\t\t%(message)s',
+    handlers=[
+        logging.FileHandler(f'{"/".join(os.path.realpath(__file__).split("/")[:-1])}/process.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
 
 class Backup:
     def __init__(self, ip, mac, source, destination, backup_destination):
@@ -24,11 +30,15 @@ class Backup:
             raise Exception('Missing arguments.')
         
         
-        logging.info(f'Process Created')
-        logging.info(f'{ip=}, {mac=}, {source=}, {destination=}, {backup_destination=}')
+        logging.info(f'PROCESS CREATED')
+        logging.info(f'{ip=}')
+        logging.info(f'{mac=}')
+        logging.info(f'{source=}')
+        logging.info(f'{destination=}')
+        logging.info(f'{backup_destination=}')
 
     def start(self):
-        logging.info(f'Process Started')
+        logging.info(f'PROCESS STARTED')
 
         # check root access
         if not os.access('/root', os.R_OK):
@@ -37,7 +47,7 @@ class Backup:
 
         # switch on
         if not self.__is_up(self.ip_address):
-            print(f'Switching on {self.ip_address}...')
+            logging.info(f'Switching on {self.mac_address}')
             self.__switch_on(self.mac_address)
 
             # wait for host to switch on
@@ -45,36 +55,43 @@ class Backup:
             while not self.__is_up(self.ip_address):
                 if count == 10:
                     logging.critical('Host took too mutch to switch on.\n')
-                    print(f'Host took too mutch to switch on.\nExiting...')
                     exit(1)
                 count += 1
 
-        print(f'{self.ip_address} is up.\n')
+        logging.info(f'{self.ip_address} is up.')
 
         # backup
-        print(f"Backing up {self.source}...")
+        source = self.source
+        destination = f'root@{self.ip_address}:{self.destination}'
+
+        logging.info(f'Remote Backup {source} to {destination}')
         self.__backup(
-            source=self.source,
-            destination=f'root@{self.ip_address}:{self.destination}')
-        print(f"{self.source} backed up.\n")
+            source=source,
+            destination=destination
+        )
+        logging.info(f"{source} backed up.\n")
 
         # repeat backup
-        print(f"Backing up {self.destination}.. to {self.backup_destination}.")
+        source = self.destination
+        destination = self.backup_destination
+
+        logging.info(f'Internal Backup ({self.ip_address}) {source} to {destination}')
         self.__internal_backup(
             ip_address=self.ip_address,
-            source=self.destination,
-            destination=self.backup_destination)
-        print(f"{self.destination} backed up.\n")
+            source=source,
+            destination=destination
+        )
+        logging.info(f"{source} backed up.\n")
         
 
         # shutdown
+        logging.info(f'Shutting Down {self.ip_address}')
         self.__shutdown(self.ip_address)
         while self.__is_up(self.ip_address):
             time.sleep(5)
-        print("Host is down.\n")
+        logging.info(f'{self.ip_address} is down.')
 
         logging.info('Backup Successful\n')
-        print("Backup successful.")
 
         
     def __is_up(self, ip_address):
@@ -84,11 +101,9 @@ class Backup:
             stderr=subprocess.PIPE
         )
 
-        logging.info(f'Ping {ip_address}: {"True" if out == 0 else "False"}')
         return True if out == 0 else False
 
     def __switch_on(self, mac_address: str):
-        logging.info(f'WakeOnLan {mac_address}')
         subprocess.call(f'wakeonlan {mac_address}',
             shell=True,
             stdout=open('/dev/null', 'w'),
@@ -96,35 +111,27 @@ class Backup:
         )
 
     def __backup(self, source, destination):
-        logging.info(f'Remote Backup {source} to {destination}')
         out = subprocess.call(f'rsync -azv --delete {source} {destination}',
             shell=True,
-            # stdout=open('/dev/null', 'w'),
             stderr=subprocess.PIPE
         )
 
         if out != 0:
             logging.error(f'Backup Error - code: {out}\n')
-            print("A backup error has occurred.")
             exit(1)
         
     def __internal_backup(self, ip_address, source, destination):
-        logging.info(f'Internal Backup {ip_address}:{source} to {ip_address}:{destination}')
         out = subprocess.call(f'ssh root@{ip_address} "rsync -azv {source}/ {destination}"',
             shell=True,
-            # stdout=open('/dev/null', 'w'),
             stderr=subprocess.PIPE
         )
 
         if out != 0:
             logging.error(f'Backup Error - code: {out}\n')
-            print("A backup error has occurred.")
             exit(1)
 
 
     def __shutdown(self, ip_address):
-        logging.info(f'Sending shutdown request {ip_address}')
-        print(f"Shutting down {ip_address}...")
         subprocess.call(f'ssh root@{ip_address} "shutdown now"',
             shell=True,
             stdout=open('/dev/null', 'w'),
