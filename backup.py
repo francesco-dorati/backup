@@ -42,7 +42,7 @@ class Backup:
 
         # check root access
         if not os.access('/root', os.R_OK):
-            logging.critical('Missing root privileges.\n')
+            logging.critical('Missing root privileges.')
             raise Exception("Missing root privileges.")
 
         # switch on
@@ -54,7 +54,7 @@ class Backup:
             count = 0
             while not self.__is_up(self.ip_address):
                 if count == 10:
-                    logging.critical('Host took too mutch to switch on.\n')
+                    logging.critical('Host took too mutch to switch on.')
                     exit(1)
                 count += 1
 
@@ -69,7 +69,7 @@ class Backup:
             source=source,
             destination=destination
         )
-        logging.info(f"{source} backed up.\n")
+        logging.info(f"{source} backed up.")
 
         # repeat backup
         source = self.destination
@@ -81,7 +81,7 @@ class Backup:
             source=source,
             destination=destination
         )
-        logging.info(f"{source} backed up.\n")
+        logging.info(f"{source} backed up.")
         
 
         # shutdown
